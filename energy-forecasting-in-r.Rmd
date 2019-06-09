@@ -1,0 +1,157 @@
+---
+title: "Forecasting Energy Prices with R"
+output: html_notebook
+---
+
+The following project involves the implementation of simple forecasting techniques in R within the context of energy and commodity prices. It leverages on [Quandl's API for Continuous Futures](https://www.quandl.com/data/CHRIS-Wiki-Continuous-Futures), data manipulation functions from [dplyr](https://dplyr.tidyverse.org/) and time series methods from [forecast by Rob Hyndman](https://www.rdocumentation.org/packages/forecast/versions/8.7).
+
+### 1. Library Imports and Preprocessing
+```{r}
+# Import key libraries
+library(tidyverse)
+library(Quandl)
+```
+```{r}
+# Load the Quandl API Key
+Quandl.api_key('rn2xyN_hG9XfxN_9ibFJ')
+
+# Query ICE Brent Contract prices from Quandl
+crude <- read_csv("https://www.quandl.com/api/v3/datasets/CHRIS/ICE_B1.csv?api_key=rn2xyN_hG9XfxN_9ibFJ"
+)
+
+# View  the structure crude data.frame
+str(crude)
+
+# View the first few rows of the crude data.frame
+head(crude)
+
+# View the last few rows of the crude data.frame
+tail(crude)
+```
+```{r}
+# Convert the crude data.frame to an xts object
+crude_xts <- xts(crude[,-1], order.by = as.POSIXct(crude$Date))
+
+head(crude_xts)
+```
+### 2. Time Series Plot of Historical Prices
+```{r}
+# Plot a time series of Brent Crude Oil prices
+autoplot(crude_xts$Settle) +
+  labs(title = "Historical Prices of Brent Crude Oil", subtitle = "From 1993-03-17 to 2019-06-07") +
+  xlab("Date") +
+  ylab("Price")
+```
+A simple line plot of Brent's historical prices showcases some salient historical facts: crude's extreme rally and decline around the 2008-2009 GFC, the bear market in early 2016, as well as the a high degree of volatility in late 2018.
+
+### 3. Histogram of Brent Crude Returns
+```{r}
+# Generate a series of returns with diff()
+crude_returns <- diff(crude_xts)
+head(crude_returns)
+```
+```{r}
+# Plot a Histogram of Returns
+ggplot(data = crude_returns, mapping = aes(x = Settle)) +
+  geom_histogram(bins = 50) +
+  labs(title = "Histogram of Brent Crude Oil Returns", subtitle = "From 1993-03-17 to 2019-06-07") +
+  xlab("Brent Crude Oil Returns") +
+  ylab("Frequency of Returns")
+```
+An analysis of the histogram of returns shows that Brent returns are mildly left-skewed with a few extreme days exceeding +5.00% and -5.00%.
+
+### 4. Boxplot Returns By Year
+```{r}
+# Group by Year and Plot a series of Boxplots
+crude %>% 
+  mutate(year = format(Date, "%Y"), returns = (Settle / lead(Settle) - 1)) %>% 
+  group_by(year) %>% 
+  ggplot(mapping = aes(x = year, y = returns, fill = year)) +
+  geom_boxplot() +
+  labs(title = "Boxplot of Historical Brent Crude Oil Returns", subtitle = "From 1993-03-17 to 2019-06-07") +
+  xlab("Year") +
+  ylab("Returns") +
+  theme(legend.position = "none", axis.text.x = element_text(angle = 45, size = 8))
+```
+By grouping boxplots by years, we can observe changes in volatility over time. We can observe, for instance, excess volatility in years 2008 (GFC) and 2016 (bear market to ~$20 per barrel). Some of Brent's largest moves also occured in the year 2008 as demonstrated by the extreme outliers.
+
+### 5. QQ Plot of Returns
+```{r}
+# Plot a QQ PLot of Returns
+crude_returns %>% 
+  ggplot(mapping = aes(sample = Settle)) +
+  stat_qq() +
+  stat_qq_line() +
+  labs(title = "Quantile-Quantile Plot of Brent Crude Oil Returns", subtitle = "From 1993-03-17 to 2019-06-07") +
+  xlab("Theoretical Quantiles") +
+  ylab("Sample Quantiles")
+```
+A QQ Plot tests for the normality of the distribution. The plot above indicates that Brent price action shows signs of "fat tails" i.e. a larger-than-expected number of occurrences at the ends of the distributions. In other words, Brent prices experience extreme moves that conform more to a Pareto/Cauchy distribution rather than a normal one.
+
+### 6. ACF and PACF Analysis
+```{r}
+library(forecast)
+
+# Plot the ACF function of Brent Crude Oil with ggAcf
+ggAcf(crude_xts$Settle) +
+  labs(title = "ACF of Brent Crude Oil", subtitle = "From 1993-03-17 to 2019-06-07")
+# Plot the PACF function of Brent Crude Oil with ggPacf
+ggPacf(crude_xts$Settle) +
+  labs(title = "PACF of Brent Crude Oil", subtitle = "From 1993-03-17 to 2019-06-07")
+```
+Analysis of the ACF and PACF functions shows high correlation between Brent prices and lagged values. This suggests the presence of trends in oil markets, which partially explains the popularity of "trend-following" amongst commodity traders. The PACF chart suggests that the autocorrelation is greatly diminished after accounting for intermediate lags.
+
+### 7. ARIMA Modeling with Brent Crude Oil Series
+```{r}
+# Fit an ARIMA model to the time series with auto.arima()
+arima_fit <- auto.arima(crude_xts$Settle)
+
+# Plot the forecasted prices of Brent Crude from the ARIMA model
+arima_fit %>% 
+  forecast() %>% 
+  autoplot()
+```
+Using the auto.arima() functionality in the 'forecast' package, R proposes an ARIMA(0, 1, 1) model for Brent. Predictions for the next-h default values suggests further declines in the Brent market.
+
+### 8. Assessing the ARIMA Model
+```{r}
+# Generate a summary of the ARIMA model
+summary(arima_fit)
+```
+```{r}
+# Analyse the residuals of the ARIMA model
+checkresiduals(arima_fit)
+```
+```{r}
+# Print the accuracy of the ARIMA model
+accuracy(arima_fit)
+```
+### 9. ETS Modeling with Brent Crude Oil Prices
+```{r}
+# Fit an 'Error, Trend, Seasonality' model to Brent Crude Oil time series
+ets_fit <- ets(crude_xts$Settle)
+
+# Plot forecasts made by the ETS model
+ets_fit %>% 
+  forecast() %>% 
+  autoplot()
+```
+Again, using the ets() functionality in 'forecast', the suggested ETS model by R proposes a sharper decline in crude markets.
+
+### 10. Assessing the ETS Model
+```{r}
+# Print a summary of the ETS Model
+summary(ets_fit)
+```
+```{r}
+# Analyse the residuals of the ETS Model
+checkresiduals(ets_fit)
+```
+```{r}
+# Prin the accuracy of the ETS model
+accuracy(ets_fit)
+```
+### 11. Conclusions
+A quick analysis of accuracy terms for each model suggests that the ETS fit performs slightly better (RMSE of 0.62 versus RMSE of 1.1 for the ARIMA model).
+
+In both cases, however, simple forecasting based on past values proposes a continuation of the decline in Brent markets. As of 9th June 2019, this forecast is supported by macro factors such as a decline in demand owing to the US-China Trade War, in addition to [a build-up of crude inventories following news of the 2018 Iranian Sanctions](https://www.fxstreet.com/news/eia-eia-commercial-crude-oil-inventories-increased-by-68-million-barrels-from-previous-week-201906051430),  as well as [the debottlenecking of the Permian Basin](https://seekingalpha.com/article/4268482-oil-production-keeps-rising-u-s-gulf-mexico).
