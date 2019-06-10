@@ -12,9 +12,6 @@ library(tidyverse)
 library(Quandl)
 ```
 ```{r}
-# Load the Quandl API Key
-Quandl.api_key('rn2xyN_hG9XfxN_9ibFJ')
-
 # Query ICE Brent Contract prices from Quandl
 crude <- read_csv("https://www.quandl.com/api/v3/datasets/CHRIS/ICE_B1.csv?api_key=rn2xyN_hG9XfxN_9ibFJ"
 )
