@@ -44,7 +44,7 @@ A simple line plot of Brent's historical prices showcases some salient historica
 ### 3. Histogram of Brent Crude Returns
 ```{r}
 # Generate a series of returns with diff()
-crude_returns <- diff(crude_xts)
+crude_returns <- diff(crude_xts) / crude_xts[-length(crude_xts)]
 head(crude_returns)
 ```
 ```{r}
@@ -55,7 +55,7 @@ ggplot(data = crude_returns, mapping = aes(x = Settle)) +
   xlab("Brent Crude Oil Returns") +
   ylab("Frequency of Returns")
 ```
-An analysis of the histogram of returns shows that Brent returns are mildly left-skewed with a few extreme days exceeding +5.00% and -5.00%.
+An analysis of the histogram of returns shows that Brent returns are mildly left-skewed with a few extreme days where prices rose or fell by more than 10%.
 
 ### 4. Boxplot Returns By Year
 ```{r}
