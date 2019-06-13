@@ -8,6 +8,7 @@ The following project involves the implementation of simple forecasting techniqu
 ### 1. Library Imports and Preprocessing
 ```{r}
 # Import key libraries
+library(knitr)
 library(tidyverse)
 library(Quandl)
 ```
@@ -31,6 +32,7 @@ crude_xts <- xts(crude[,-1], order.by = as.POSIXct(crude$Date))
 
 head(crude_xts)
 ```
+
 ### 2. Time Series Plot of Historical Prices
 ```{r}
 # Plot a time series of Brent Crude Oil prices
@@ -123,6 +125,7 @@ checkresiduals(arima_fit)
 # Print the accuracy of the ARIMA model
 accuracy(arima_fit)
 ```
+
 ### 9. ETS Modeling with Brent Crude Oil Prices
 ```{r}
 # Fit an 'Error, Trend, Seasonality' model to Brent Crude Oil time series
@@ -148,6 +151,11 @@ checkresiduals(ets_fit)
 # Prin the accuracy of the ETS model
 accuracy(ets_fit)
 ```
+```{r}
+# Export the analysis to an R Script
+purl("energy-forecasting-in-r.Rmd")
+```
+
 ### 11. Conclusions
 A quick analysis of accuracy terms for each model suggests that the ETS fit performs slightly better (RMSE of 0.62 versus RMSE of 1.1 for the ARIMA model).
 
