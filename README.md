@@ -5,5 +5,5 @@ This projects employs simple forecasting techniques from the R 'forecast' packag
 It is accompanied by short section focusing on Exploratory Data Analysis for Brent time series data.
 
 <p align="center">
-  <img src="https://github.com/NicholasTanWeiHong/energy-forecasting-in-r/blob/master/images/energy-forecasting-in-r.png?raw=true" alt="Boxplots"/>
+  <img src="https://github.com/NicholasTanWeiHong/energy-forecasting-in-r/blob/master/energy-forecasting-in-r_files/figure-gfm/unnamed-chunk-7-1.png?raw=true" alt="Boxplots"/>
 </p>
