@@ -1,5 +1,6 @@
 ## ------------------------------------------------------------------------
 # Import key libraries
+library(knitr)
 library(tidyverse)
 library(Quandl)
 
@@ -125,4 +126,8 @@ checkresiduals(ets_fit)
 ## ------------------------------------------------------------------------
 # Prin the accuracy of the ETS model
 accuracy(ets_fit)
+
+## ------------------------------------------------------------------------
+# Export the analysis to an R Script
+purl("energy-forecasting-in-r.Rmd")
 
